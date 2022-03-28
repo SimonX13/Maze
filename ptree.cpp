@@ -350,31 +350,31 @@ void PTree::Prune(double tolerance) {
   // add your implementation below
   prune(tolerance, root);
 }
-void PTree::prune(double tolerance, Node* croot){
-	if (croot == NULL || croot->A == NULL){
+void PTree::prune(double tolerance, Node* curroot){
+	if (curroot == NULL || curroot->A == NULL){
     return;
   } 
-	if (prunable(tolerance, croot, croot->avg)){
-		Clear(croot->A);
-		Clear(croot->B);
-		croot->A = NULL;
-		croot->B = NULL;
+	if (prunable(tolerance, curroot, croot->avg)){
+		Clear(curroot->A);
+		Clear(curroot->B);
+		curroot->A = NULL;
+		curroot->B = NULL;
 	} else {
-		prune(tolerance, croot->A);
-		prune(tolerance, croot->B);
+		prune(tolerance, curroot->A);
+		prune(tolerance, curroot->B);
 	}
 }
-bool PTree::prunable(double tolerance, Node * croot, HSLAPixel avg) {
+bool PTree::prunable(double tolerance, Node * curroot, HSLAPixel avg) {
 	// if (croot->A == NULL)
 	// 	return croot->avg.dist(avg) <= tolerance;
 	// return prunable(tolerance, croot->A, avg) && prunable(tolerance, croot->B, avg);
 
 
 
-  if (croot->A != NULL){
-    return (prunable(tolerance, croot->A, avg) && prunable(tolerance, croot->B, avg));
+  if (curroot->A != NULL){
+    return (prunable(tolerance, curroot->A, avg) && prunable(tolerance, curroot->B, avg));
   }
-	return tolerance >= croot->avg.dist(avg);
+	return tolerance >= curroot->avg.dist(avg);
 }
 /*
 *  Returns the total number of nodes in the tree.
@@ -386,12 +386,12 @@ int PTree::Size() const {
   // replace the line below with your implementation
   return size(root);
 }
-int PTree::size(Node* croot) const {
+int PTree::size(Node* curroot) const {
 	// if(croot == NULL) return 0;
 	// return 1+size(croot->A)+size(croot->B);
 
   if(croot != NULL){
-    return 1+size(croot->A)+size(croot->B);
+    return 1+size(curroot->A)+size(curroot->B);
   }
   return 0;
 
