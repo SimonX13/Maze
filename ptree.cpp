@@ -27,11 +27,11 @@ typedef pair<unsigned int, unsigned int> pairUI;
 */
 void PTree::Clear() {
   // add your implementation below
-  Clear(root);
+  Clear1(root);
 }
 
 //Clearing all the nodes from left to right
-void PTree::Clear(Node* subroot){
+void PTree::Clear1(Node* subroot){
   // if(subroot!=NULL){
   //   if(subroot->A ==NULL && subroot->B ==NULL){
   //     delete subroot;
@@ -45,8 +45,8 @@ void PTree::Clear(Node* subroot){
   //   return;
   // }
   if (subroot != NULL){
-		Clear(subroot->A);
-    Clear(subroot->B);
+		Clear1(subroot->A);
+    Clear1(subroot->B);
 		delete subroot;
 	}
 }
@@ -61,37 +61,18 @@ void PTree::Clear(Node* subroot){
 */
 void PTree::Copy(const PTree& other) {
   // add your implementation below
-  root = Copy(other.root);
+  root = Copy1(other.root);
 }
 
-Node* PTree::Copy2( Node* otherRoot) {
-  // add your implementation below
-  // if(otherRoot !=NULL){
-  //   if(otherRoot->A ==NULL && otherRoot->B ==NULL){
-  //     return;
-  //   }
-  //   if(otherRoot->A ==NULL){
-  //     Node* xx = new Node(otherRoot->B);
-  //     subroot->B = xx;
-      
-  //     Copy(otherRoot->B,subroot->B);
-  //   }
-  //   if(otherRoot->B ==NULL){
-  //     Node* xx = new Node(otherRoot->A);
-  //     subroot->A = xx;
-      
-  //     Copy(otherRoot->A,subroot->A);
-  //   }
-    
-  // }
-  // return;
-  Node* temp = NULL;
-	if (otherRoot != NULL){
-		temp = new Node(otherRoot->upperleft, otherRoot->width, otherRoot->height, otherRoot->avg);
-		temp->A = Copy2(otherRoot->A);
-		temp->B = Copy2(otherRoot->B);
+Node* PTree::Copy1(Node* otherRoot) {
+	if (otherRoot){
+    Node* temp = new Node(otherRoot->upperleft, otherRoot->width, otherRoot->height, otherRoot->avg);
+		temp->A = Copy1(otherRoot->A);
+		temp->B = Copy1(otherRoot->B);
+    return temp;
 	}
-	return temp;
+
+	return NULL;
 }
 
 /*
@@ -108,66 +89,61 @@ Node* PTree::Copy2( Node* otherRoot) {
 Node* PTree::BuildNode(PNG& im, pair<unsigned int, unsigned int> ul, unsigned int w, unsigned int h) {
   // replace the line below with your implementation
   //return nullptr;
-  Node* curr = new Node(ul,w ,h , average(im,ul,w,h), nullptr, nullptr);
-  curr->upperleft=ul;
-  curr->width=w;
-  curr->height=h;
-  curr->avg= average(im,ul,w,h);
-  cout<< curr->avg.h <<"\n";
-  if(!(h==1 && w==1)){
-    if(h>w){
-      if(h%2==1){
-        curr->A=BuildNode(im,make_pair(ul.first,ul.second),w,(h-1)/2);
-        curr->B=BuildNode(im,make_pair(ul.first,ul.second+(h-1)/2),w,(h+1)/2);
-        return curr;
-      }
-      else{
-        curr->A=BuildNode(im,make_pair(ul.first,ul.second),w,h/2);
-        curr->B=BuildNode(im,make_pair(ul.first,ul.second+h/2),w,h/2);
-        return curr;
-      }
-    }
-    else{
-      if(w%2==1){
-        curr->A=BuildNode(im,make_pair(ul.first,ul.second),(w-1)/2,h);
-        curr->B=BuildNode(im,make_pair(ul.first+(w-1)/2,ul.second),(w+1)/2,h);
-        return curr;
-      }
-      else{
-        curr->A=BuildNode(im,make_pair(ul.first,ul.second),w/2,h);
-        curr->B=BuildNode(im,make_pair(ul.first+w/2,ul.second),w/2,h);
-        return curr;
-      }
-    }
-  }
-  else{
-    curr->A=NULL;
-    curr->B=NULL;
+
+  if (w == 1 && h == 1) {
+    Node* curr = new Node(ul,w,h,*im.getPixel(ul.first, ul.second));
     return curr;
+  } else {
+
+    Node* curr = new Node(ul, w, h, average(im,ul,w,h));
+
+    if(h>w){
+      curr->A=BuildNode(im, ul, w, h/2);
+      curr->B=BuildNode(im, make_pair(ul.first,ul.second + h/2),w,h - h/2);
+      return curr;
+    } else{
+      curr->A=BuildNode(im, ul, w/2, h);
+      curr->B=BuildNode(im, make_pair(ul.first+w/2,ul.second), w-w/2, h);
+      return curr;
+    }
+
   }
   
 }
 
 HSLAPixel PTree::average(PNG& image, pair<unsigned int, unsigned int> ul, unsigned int w, unsigned int h){
-    double totalhX = 0, totalhY = 0,totals = 0,totall = 0,totala = 0;
+    double totalhX = 0; 
+    double totalhY = 0;
+    double totals = 0;
+    double totall = 0;
+    double totala = 0;
+    double count = 0;
 
-    for (unsigned int x = ul.first; x < ul.first+w; x++) {
-        for (unsigned int y = ul.second; y < ul.second+h; y++) {
-            HSLAPixel *pixel = image.getPixel(x, y);
+    for (unsigned int x = 0; x < w; x++) {
+        for (unsigned int y = 0; y < h; y++) {
+            HSLAPixel *pixel = image.getPixel(x + ul.first, y + ul.second);
             totalhX = totalhX + Deg2X(pixel->h);
             totalhY = totalhY + Deg2Y(pixel->h);
 
             totals = totals + pixel->s;
             totall = totall + pixel->l;
             totala = totala + pixel->a;
+
+            count = count + 1;
         }
     }
-    totalhX = totalhX/w;
-    totalhY = totalhY/h;
-    HSLAPixel x = HSLAPixel( XY2Deg(totalhX,totalhY), totals/(w*h), totall/(w*h), totala/(w*h) );
-    return x;
+
+    totalhX = totalhX / count;
+    totalhY = totalhY / count;
+    totals = totals / count; 
+    totall = totall / count;
+    totala = totala / count;
+
+    HSLAPixel average(XY2Deg(totalhX,totalhY), totals, totall, totala);
+    return average;
 
 }
+
 ////////////////////////////////
 // PTree public member functions
 ////////////////////////////////
@@ -219,8 +195,8 @@ HSLAPixel PTree::average(PNG& image, pair<unsigned int, unsigned int> ul, unsign
 */
 PTree::PTree(PNG& im) {
   // add your implementation below
-  pair<int, int> ulxx (0, 0);
-  root=BuildNode(im, ulxx, im.width(), im.height());
+  pair<int, int> ul (0, 0);
+  root=BuildNode(im, ul, im.width(), im.height());
 }
 
 /*
@@ -259,17 +235,14 @@ void PTree::deshelper(Node* root){
 */
 PTree& PTree::operator=(const PTree& other) {
   // add your implementation below
- if(other.root!=root){
-    deshelper(root);
-    root=copyhelper(other.root);
+  if(root != other.root) {
+    Clear();
+    Copy(other);
+    return *this;
+  } else{
     return *this;
   }
-  else{
-    return *this;
-  }
-  // Clear();
-  // Copy(other);
-  // return *this;
+
 }
 
 /*
@@ -278,7 +251,7 @@ PTree& PTree::operator=(const PTree& other) {
 */
 PTree::~PTree() {
   // add your implementation below
-  deshelper(this->root);
+  Clear();
 }
 
 /*
@@ -294,7 +267,33 @@ PTree::~PTree() {
 */
 PNG PTree::Render() const {
   // replace the line below with your implementation
-  return PNG();
+  PNG im(root->width, root->height);
+  Render1(im, root);
+  return im;
+}
+
+void PTree::Render1(PNG& im, Node* root) const {
+  
+  if (!root) {
+    return;
+  } else {
+		if(!root->A) {
+			for(unsigned int x = root->upperleft.first; x < root->upperleft.first + root->width; x++){
+				for(unsigned int y = root->upperleft.second; y < root->upperleft.second + root->height; y++){
+				  HSLAPixel *pixel = im.getPixel(x, y);
+          pixel->h = root->avg.h;
+          pixel->s = root->avg.s;
+          pixel->l = root->avg.l;
+          pixel->a = root->avg.a;
+				}
+			}
+
+		} else {
+			Render1(im, root->A);
+			Render1(im, root->B);
+		}
+	}
+
 }
 
 /*
@@ -315,7 +314,39 @@ PNG PTree::Render() const {
 */
 void PTree::Prune(double tolerance) {
   // add your implementation below
+  Prune1(tolerance, root);
+}
+
+void PTree::Prune1(double tolerance, Node *root){
+	if ((!root) || (!root->A)) {
+    return;
+  } else {
+
+    bool execute = checkPrune(tolerance, root, root->avg);
+    if (execute){
+      Clear1(root->A);
+      Clear1(root->B);
+      root->A = NULL;
+      root->B = NULL;
+
+    } else {
+      Prune1(tolerance, root->A);
+      Prune1(tolerance, root->B);
+    }
+  }
+}
+
+bool PTree::checkPrune(double tolerance, Node *root, HSLAPixel avg) {
   
+	if (!(root->A)) {
+    bool prune = false;
+    prune = (root->avg.dist(avg) <= tolerance);
+    return prune;
+  } else {
+    bool pruneA = checkPrune(tolerance, root->A, avg);
+    bool pruneB = checkPrune(tolerance, root->B, avg);
+	  return (pruneA && pruneB);
+  }
 }
 
 /*
@@ -326,7 +357,17 @@ void PTree::Prune(double tolerance) {
 */
 int PTree::Size() const {
   // replace the line below with your implementation
-  return -1;
+  return Size1(root);
+}
+
+int PTree::Size1(Node* root) const {
+	if(!root) {
+    return 0;
+  } 
+  if (root) {
+    return Size1(root->A) + Size1(root->B) + 1;
+  }
+	
 }
 
 /*
@@ -337,7 +378,15 @@ int PTree::Size() const {
 */
 int PTree::NumLeaves() const {
   // replace the line below with your implementation
-  return -1;
+  return NumLeaves1(root);
+}
+
+int PTree::NumLeaves1(Node *root) const {
+	if(!root->A) {
+    return 1;
+  } else {
+    return NumLeaves1(root->A) + NumLeaves1(root->B);
+  }
 }
 
 /*
@@ -353,7 +402,38 @@ int PTree::NumLeaves() const {
 */
 void PTree::FlipHorizontal() {
   // add your implementation below
-  
+  //FlipHorizontal1(root);
+}
+
+void PTree::FlipHorizontal1(Node *root) {
+	/*
+  if(!root->A) {
+    return;
+  }
+
+	if(croot->height <= croot->width){
+		croot->A->upperleft = pair<unsigned int, unsigned int>(
+			croot->upperleft.first + croot->B->width,
+			croot->upperleft.second
+		);
+		croot->B->upperleft = pair<unsigned int, unsigned int>(
+			croot->upperleft.first,
+			croot->upperleft.second
+		);
+	} else {
+		croot->A->upperleft = pair<unsigned int, unsigned int>(
+			croot->upperleft.first,
+			croot->A->upperleft.second
+		);
+		croot->B->upperleft = pair<unsigned int, unsigned int>(
+			croot->upperleft.first,
+			croot->B->upperleft.second
+		);
+	}
+
+	flipHorizontal(croot->A);
+	flipHorizontal(croot->B);
+  */
 }
 
 /*
@@ -369,7 +449,30 @@ void PTree::FlipHorizontal() {
 */
 void PTree::FlipVertical() {
   // add your implementation below
-  
+  //FlipVertical1(root);
+}
+
+void PTree::FlipVertical1(Node *root) {
+  /*
+	if (croot->A == NULL) return;
+	if (croot->height <= croot->width){
+		croot->A->upperleft = pair<unsigned int, unsigned int> (
+			croot->A->upperleft.first,
+			croot->upperleft.second);
+		croot->B->upperleft = pair<unsigned int, unsigned int> (
+			croot->B->upperleft.first,
+			croot->upperleft.second);
+	} else {
+		croot->A->upperleft = pair<unsigned int, unsigned int> (
+			croot->upperleft.first,
+			croot->upperleft.second + croot->B->height);
+		croot->B->upperleft = pair<unsigned int, unsigned int> (
+			croot->upperleft.first,
+			croot->upperleft.second);
+	}
+	flipVertical(croot->A);
+	flipVertical(croot->B);
+  */
 }
 
 /*
