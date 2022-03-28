@@ -23,5 +23,14 @@ void Clear(Node* subroot);
 Node* copyhelper(Node* root);
 Node* Copy2( Node* otherRoot);
 HSLAPixel average(PNG& image, pair<unsigned int, unsigned int> ul, unsigned int w, unsigned int h);
-void deshelper(Node* root);
+void destoryhelper(Node* root);
+
+int numLeaves(Node * root)const;
+int size(Node* croot) const;
+bool prunable(double tolerance, Node * croot, HSLAPixel avg);
+void prune(double tolerance, Node* croot);
+void render(PNG& im, Node* root) const;
+void flipHorizontal(Node * croot) ;
+
+
 #endif

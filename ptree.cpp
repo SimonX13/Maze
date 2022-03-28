@@ -51,6 +51,23 @@ void PTree::Clear(Node* subroot){
 	}
 }
 
+
+Node* PTree::copyhelper(Node* root){
+  Node* newRoot;
+  if(root!=NULL){
+    newRoot=new Node;
+    newRoot->width=root->width;
+    newRoot->height=root->height;
+    newRoot->upperleft=root->upperleft;
+    newRoot->avg=root->avg;
+    newRoot->A=copyhelper(root->A);
+    newRoot->B=copyhelper(root->B);
+  } 
+  else {return NULL;}
+  return newRoot;
+  
+}
+
 /*
 *  Copies the parameter other PTree into the current PTree.
 *  Does not free any memory. Should be called by copy constructor and operator=.
@@ -61,7 +78,7 @@ void PTree::Clear(Node* subroot){
 */
 void PTree::Copy(const PTree& other) {
   // add your implementation below
-  root = Copy(other.root);
+  root = Copy2(other.root);
 }
 
 Node* PTree::Copy2( Node* otherRoot) {
@@ -87,11 +104,11 @@ Node* PTree::Copy2( Node* otherRoot) {
   // return;
   Node* temp = NULL;
 	if (otherRoot != NULL){
-		temp = new Node(otherRoot->upperleft, otherRoot->width, otherRoot->height, otherRoot->avg);
-		temp->A = Copy2(otherRoot->A);
-		temp->B = Copy2(otherRoot->B);
+		tempNode = new Node(otherRoot->upperleft, otherRoot->width, otherRoot->height, otherRoot->avg);
+		tempNode->A = Copy2(otherRoot->A);
+		tempNode->B = Copy2(otherRoot->B);
 	}
-	return temp;
+	return tempNode;
 }
 
 /*
@@ -108,42 +125,42 @@ Node* PTree::Copy2( Node* otherRoot) {
 Node* PTree::BuildNode(PNG& im, pair<unsigned int, unsigned int> ul, unsigned int w, unsigned int h) {
   // replace the line below with your implementation
   //return nullptr;
-  Node* curr = new Node(ul,w ,h , average(im,ul,w,h), nullptr, nullptr);
-  curr->upperleft=ul;
-  curr->width=w;
-  curr->height=h;
-  curr->avg= average(im,ul,w,h);
-  cout<< curr->avg.h <<"\n";
+  Node* newNode = new Node(ul,w ,h , average(im,ul,w,h), nullptr, nullptr);
+  newNode->upperleft=ul;
+  newNode->width=w;
+  newNode->height=h;
+  newNode->avg= average(im,ul,w,h);
+  cout<< newNode->avg.h <<"\n";
   if(!(h==1 && w==1)){
     if(h>w){
       if(h%2==1){
-        curr->A=BuildNode(im,make_pair(ul.first,ul.second),w,(h-1)/2);
-        curr->B=BuildNode(im,make_pair(ul.first,ul.second+(h-1)/2),w,(h+1)/2);
-        return curr;
+        newNode->A=BuildNode(im,make_pair(ul.first,ul.second),w,(h-1)/2);
+        newNode->B=BuildNode(im,make_pair(ul.first,ul.second+(h-1)/2),w,(h+1)/2);
+        return newNode;
       }
       else{
-        curr->A=BuildNode(im,make_pair(ul.first,ul.second),w,h/2);
-        curr->B=BuildNode(im,make_pair(ul.first,ul.second+h/2),w,h/2);
-        return curr;
+        newNode->A=BuildNode(im,make_pair(ul.first,ul.second),w,h/2);
+        newNode->B=BuildNode(im,make_pair(ul.first,ul.second+h/2),w,h/2);
+        return newNode;
       }
     }
     else{
       if(w%2==1){
-        curr->A=BuildNode(im,make_pair(ul.first,ul.second),(w-1)/2,h);
-        curr->B=BuildNode(im,make_pair(ul.first+(w-1)/2,ul.second),(w+1)/2,h);
-        return curr;
+        newNode->A=BuildNode(im,make_pair(ul.first,ul.second),(w-1)/2,h);
+        newNode->B=BuildNode(im,make_pair(ul.first+(w-1)/2,ul.second),(w+1)/2,h);
+        return newNode;
       }
       else{
-        curr->A=BuildNode(im,make_pair(ul.first,ul.second),w/2,h);
-        curr->B=BuildNode(im,make_pair(ul.first+w/2,ul.second),w/2,h);
-        return curr;
+        newNode->A=BuildNode(im,make_pair(ul.first,ul.second),w/2,h);
+        newNode->B=BuildNode(im,make_pair(ul.first+w/2,ul.second),w/2,h);
+        return newNode;
       }
     }
   }
   else{
-    curr->A=NULL;
-    curr->B=NULL;
-    return curr;
+    newNode->A=NULL;
+    newNode->B=NULL;
+    return newNode;
   }
   
 }
@@ -164,8 +181,8 @@ HSLAPixel PTree::average(PNG& image, pair<unsigned int, unsigned int> ul, unsign
     }
     totalhX = totalhX/w;
     totalhY = totalhY/h;
-    HSLAPixel x = HSLAPixel( XY2Deg(totalhX,totalhY), totals/(w*h), totall/(w*h), totala/(w*h) );
-    return x;
+    HSLAPixel temp = HSLAPixel( XY2Deg(totalhX,totalhY), totals/(w*h), totall/(w*h), totala/(w*h) );
+    return temp;
 
 }
 ////////////////////////////////
@@ -235,13 +252,13 @@ PTree::PTree(const PTree& other) {
   Copy(other);
 }
 
-void PTree::deshelper(Node* root){
+void PTree::destoryhelper(Node* root){
   Node* n = root;
   if(n->A!=nullptr){
-    deshelper(n->A);
+    destoryhelper(n->A);
   }
   if(n->B!=nullptr){
-    deshelper(n->B);
+    destoryhelper(n->B);
   }
   delete n;
   root = nullptr;
@@ -260,7 +277,7 @@ void PTree::deshelper(Node* root){
 PTree& PTree::operator=(const PTree& other) {
   // add your implementation below
  if(other.root!=root){
-    deshelper(root);
+    destoryhelper(root);
     root=copyhelper(other.root);
     return *this;
   }
@@ -278,7 +295,7 @@ PTree& PTree::operator=(const PTree& other) {
 */
 PTree::~PTree() {
   // add your implementation below
-  deshelper(this->root);
+  destoryhelper(this->root);
 }
 
 /*
@@ -294,9 +311,25 @@ PTree::~PTree() {
 */
 PNG PTree::Render() const {
   // replace the line below with your implementation
-  return PNG();
+  PNG im(root->width, root->height);
+	render(im, root);
+  return im;
 }
 
+void PTree::render(PNG& im, Node* root) const {
+	if(root != NULL){
+		if(root->A == NULL) {
+			for(unsigned int x = root->upperleft.first; x< root->upperleft.first+root->width; x++){
+				for(unsigned int y = root->upperleft.second; y< root->upperleft.second+root->height;y++){
+					*im.getPixel(x, y) = root->avg;
+				}
+			}
+		} else {
+			render(im, root->A);
+			render(im, root->B);
+		}
+	}
+}
 /*
 *  Trims subtrees as high as possible in the tree. A subtree is pruned
 *  (its children are cleared/deallocated) if ALL of its leaves have colour
@@ -315,9 +348,34 @@ PNG PTree::Render() const {
 */
 void PTree::Prune(double tolerance) {
   // add your implementation below
-  
+  prune(tolerance, root);
 }
+void PTree::prune(double tolerance, Node* croot){
+	if (croot == NULL || croot->A == NULL){
+    return;
+  } 
+	if (prunable(tolerance, croot, croot->avg)){
+		Clear(croot->A);
+		Clear(croot->B);
+		croot->A = NULL;
+		croot->B = NULL;
+	} else {
+		prune(tolerance, croot->A);
+		prune(tolerance, croot->B);
+	}
+}
+bool PTree::prunable(double tolerance, Node * croot, HSLAPixel avg) {
+	// if (croot->A == NULL)
+	// 	return croot->avg.dist(avg) <= tolerance;
+	// return prunable(tolerance, croot->A, avg) && prunable(tolerance, croot->B, avg);
 
+
+
+  if (croot->A != NULL){
+    return (prunable(tolerance, croot->A, avg) && prunable(tolerance, croot->B, avg));
+  }
+	return tolerance >= croot->avg.dist(avg);
+}
 /*
 *  Returns the total number of nodes in the tree.
 *  This function should run in time linearly proportional to the size of the tree.
@@ -326,9 +384,19 @@ void PTree::Prune(double tolerance) {
 */
 int PTree::Size() const {
   // replace the line below with your implementation
-  return -1;
+  return size(root);
 }
+int PTree::size(Node* croot) const {
+	// if(croot == NULL) return 0;
+	// return 1+size(croot->A)+size(croot->B);
 
+  if(croot != NULL){
+    return 1+size(croot->A)+size(croot->B);
+  }
+  return 0;
+
+
+}
 /*
 *  Returns the total number of leaf nodes in the tree.
 *  This function should run in time linearly proportional to the size of the tree.
@@ -337,9 +405,18 @@ int PTree::Size() const {
 */
 int PTree::NumLeaves() const {
   // replace the line below with your implementation
-  return -1;
+  return numLeaves(root);
 }
+int PTree::numLeaves(Node * root) const {
+	// if(root->A == NULL) return 1;
+	// return numLeaves(root->A)+numLeaves(root->B);
 
+  if(root->A != NULL){
+    int temp = numLeaves(root->A)+numLeaves(root->B);
+    return temp;
+  }
+  return 1;
+}
 /*
 *  Rearranges the nodes in the tree, such that a rendered PNG will be flipped horizontally
 *  (i.e. mirrored over a vertical axis).
@@ -353,9 +430,37 @@ int PTree::NumLeaves() const {
 */
 void PTree::FlipHorizontal() {
   // add your implementation below
-  
+  flipHorizontal(root);
 }
 
+void PTree::flipHorizontal(Node * currroot) {
+	if(currroot->A == NULL){
+    return;
+  }
+	if(currroot->width >= currroot->height ){
+		// swap A and B
+		currroot->A->upperleft = pair<unsigned int, unsigned int>(
+			currroot->upperleft.first + currroot->B->width,
+			currroot->upperleft.second
+		);
+		currroot->B->upperleft = pair<unsigned int, unsigned int>(
+			currroot->upperleft.first,
+			currroot->upperleft.second
+		);
+	} else {
+		currroot->A->upperleft = pair<unsigned int, unsigned int>(
+			currroot->upperleft.first,
+			currroot->A->upperleft.second
+		);
+		currroot->B->upperleft = pair<unsigned int, unsigned int>(
+			currroot->upperleft.first,
+			currroot->B->upperleft.second
+		);
+	}
+
+	flipHorizontal(currroot->A);
+	flipHorizontal(currroot->B);
+}
 /*
 *  Like the function above, rearranges the nodes in the tree, such that a rendered PNG
 *  will be flipped vertically (i.e. mirrored over a horizontal axis).
