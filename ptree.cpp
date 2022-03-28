@@ -51,6 +51,23 @@ void PTree::Clear1(Node* subroot){
 	}
 }
 
+
+Node* PTree::copyhelper(Node* root){
+  Node* newRoot;
+  if(root!=NULL){
+    newRoot=new Node;
+    newRoot->width=root->width;
+    newRoot->height=root->height;
+    newRoot->upperleft=root->upperleft;
+    newRoot->avg=root->avg;
+    newRoot->A=copyhelper(root->A);
+    newRoot->B=copyhelper(root->B);
+  } 
+  else {return NULL;}
+  return newRoot;
+  
+}
+
 /*
 *  Copies the parameter other PTree into the current PTree.
 *  Does not free any memory. Should be called by copy constructor and operator=.
@@ -211,13 +228,13 @@ PTree::PTree(const PTree& other) {
   Copy(other);
 }
 
-void PTree::deshelper(Node* root){
+void PTree::destoryhelper(Node* root){
   Node* n = root;
   if(n->A!=nullptr){
-    deshelper(n->A);
+    destoryhelper(n->A);
   }
   if(n->B!=nullptr){
-    deshelper(n->B);
+    destoryhelper(n->B);
   }
   delete n;
   root = nullptr;
@@ -296,6 +313,20 @@ void PTree::Render1(PNG& im, Node* root) const {
 
 }
 
+void PTree::render(PNG& im, Node* root) const {
+	if(root != NULL){
+		if(root->A == NULL) {
+			for(unsigned int x = root->upperleft.first; x< root->upperleft.first+root->width; x++){
+				for(unsigned int y = root->upperleft.second; y< root->upperleft.second+root->height;y++){
+					*im.getPixel(x, y) = root->avg;
+				}
+			}
+		} else {
+			render(im, root->A);
+			render(im, root->B);
+		}
+	}
+}
 /*
 *  Trims subtrees as high as possible in the tree. A subtree is pruned
 *  (its children are cleared/deallocated) if ALL of its leaves have colour
@@ -348,7 +379,18 @@ bool PTree::checkPrune(double tolerance, Node *root, HSLAPixel avg) {
 	  return (pruneA && pruneB);
   }
 }
+bool PTree::prunable(double tolerance, Node * curroot, HSLAPixel avg) {
+	// if (croot->A == NULL)
+	// 	return croot->avg.dist(avg) <= tolerance;
+	// return prunable(tolerance, croot->A, avg) && prunable(tolerance, croot->B, avg);
 
+
+
+  if (curroot->A != NULL){
+    return (prunable(tolerance, curroot->A, avg) && prunable(tolerance, curroot->B, avg));
+  }
+	return tolerance >= curroot->avg.dist(avg);
+}
 /*
 *  Returns the total number of nodes in the tree.
 *  This function should run in time linearly proportional to the size of the tree.
@@ -369,7 +411,17 @@ int PTree::Size1(Node* root) const {
   }
 	
 }
+int PTree::size(Node* curroot) const {
+	// if(croot == NULL) return 0;
+	// return 1+size(croot->A)+size(croot->B);
 
+  if(croot != NULL){
+    return 1+size(curroot->A)+size(curroot->B);
+  }
+  return 0;
+
+
+}
 /*
 *  Returns the total number of leaf nodes in the tree.
 *  This function should run in time linearly proportional to the size of the tree.
@@ -388,7 +440,16 @@ int PTree::NumLeaves1(Node *root) const {
     return NumLeaves1(root->A) + NumLeaves1(root->B);
   }
 }
+int PTree::numLeaves(Node * root) const {
+	// if(root->A == NULL) return 1;
+	// return numLeaves(root->A)+numLeaves(root->B);
 
+  if(root->A != NULL){
+    int temp = numLeaves(root->A)+numLeaves(root->B);
+    return temp;
+  }
+  return 1;
+}
 /*
 *  Rearranges the nodes in the tree, such that a rendered PNG will be flipped horizontally
 *  (i.e. mirrored over a vertical axis).
@@ -436,6 +497,34 @@ void PTree::FlipHorizontal1(Node *root) {
   */
 }
 
+void PTree::flipHorizontal(Node * currroot) {
+	if(currroot->A == NULL){
+    return;
+  }
+	if(currroot->width >= currroot->height ){
+		// swap A and B
+		currroot->A->upperleft = pair<unsigned int, unsigned int>(
+			currroot->upperleft.first + currroot->B->width,
+			currroot->upperleft.second
+		);
+		currroot->B->upperleft = pair<unsigned int, unsigned int>(
+			currroot->upperleft.first,
+			currroot->upperleft.second
+		);
+	} else {
+		currroot->A->upperleft = pair<unsigned int, unsigned int>(
+			currroot->upperleft.first,
+			currroot->A->upperleft.second
+		);
+		currroot->B->upperleft = pair<unsigned int, unsigned int>(
+			currroot->upperleft.first,
+			currroot->B->upperleft.second
+		);
+	}
+
+	flipHorizontal(currroot->A);
+	flipHorizontal(currroot->B);
+}
 /*
 *  Like the function above, rearranges the nodes in the tree, such that a rendered PNG
 *  will be flipped vertically (i.e. mirrored over a horizontal axis).
