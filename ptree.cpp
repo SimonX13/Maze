@@ -102,7 +102,7 @@ Node* PTree::Copy2( Node* otherRoot) {
     
   // }
   // return;
-  Node* temp = NULL;
+  Node* tempNode = NULL;
 	if (otherRoot != NULL){
 		tempNode = new Node(otherRoot->upperleft, otherRoot->width, otherRoot->height, otherRoot->avg);
 		tempNode->A = Copy2(otherRoot->A);
